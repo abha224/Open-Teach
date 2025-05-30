@@ -4,8 +4,8 @@ from openteach.utils.network import ZMQKeypointPublisher, ZMQKeypointSubscriber
 from openteach.utils.timer import FrequencyTimer
 from openteach.components import Component 
 
-from reskin_sensor import ReSkinProcess
-
+# from reskin_sensor import ReSkinProcess
+from reskin_sensor.sensor_proc import ReSkinProcess
 
 class ReskinSensorPublisher(Component):
     def __init__(self, stream_configs, reskin_config):

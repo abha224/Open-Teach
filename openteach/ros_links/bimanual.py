@@ -73,6 +73,8 @@ class Robot(XArmAPI):
 
         modified_robot_home_pose_AA = ROBOT_HOME_POSE_AA[:]
         
+        # Abha: this is where the code is for reseting the robot initial position  
+
         # For SpaceMouse
         # modified_robot_home_pose_AA[0] += 33
         # modified_robot_home_pose_AA[1] -= 5
@@ -94,9 +96,9 @@ class Robot(XArmAPI):
         # modified_robot_home_pose_AA[2] -= 155
         
         # # For USB Insertion
-        modified_robot_home_pose_AA[0] += 119
-        modified_robot_home_pose_AA[1] -= 75
-        modified_robot_home_pose_AA[2] -= 155
+        # modified_robot_home_pose_AA[0] += 119
+        # modified_robot_home_pose_AA[1] -= 75
+        # modified_robot_home_pose_AA[2] -= 155
         
         
         def random_outside(inner_min, inner_max, outer_min, outer_max):

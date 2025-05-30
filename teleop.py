@@ -1,6 +1,8 @@
 import hydra
 from openteach.components import TeleOperator
+# import sys
 
+# sys.path.insert(0, "/mnt/robotlab/abha/visuoskin/envs/xarm-env")
 @hydra.main(version_base = '1.2', config_path = 'configs', config_name = 'teleop')
 def main(configs):
     teleop = TeleOperator(configs)
