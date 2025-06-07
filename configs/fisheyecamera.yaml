@@ -6,7 +6,7 @@ defaults:
 
 # Start fisheye cam indices from 51
 fisheye_cam_numbers:
-  - 51: 8 # top
+  - 51: 2 # top
   - 52: 0 #fisheye
   
 cam_configs:
