@@ -82,7 +82,7 @@ class Bimanual(RobotWrapper):
 
     def get_gripper_state_from_socket(self):
         self._gripper_state_subscriber = ZMQKeypointSubscriber(
-                host = '10.19.216.156', 
+                host = '10.21.116.247', 
                 port = 8108,
                 topic = 'gripper_right'
             )
@@ -95,7 +95,7 @@ class Bimanual(RobotWrapper):
         
     def get_cartesian_state_from_socket(self):
         self._cartesian_state_subscriber = ZMQKeypointSubscriber(
-                host = '10.19.216.156', 
+                host = '10.21.116.247', 
                 port = 8118,
                 topic = 'cartesian'
             )
@@ -108,7 +108,7 @@ class Bimanual(RobotWrapper):
     
     def get_joint_state_from_socket(self):
         self._joint_state_subscriber = ZMQKeypointSubscriber(
-                host = '10.19.216.156', 
+                host = '10.21.116.247', 
                 port = 8119,
                 topic = 'joint'
             )
@@ -122,7 +122,7 @@ class Bimanual(RobotWrapper):
     
     def get_cartesian_commanded_position(self):
         self.cartesian_state_subscriber = ZMQKeypointSubscriber(
-                host = '10.19.216.156', 
+                host = '10.21.116.247', 
                 port = 8120,
                 topic = 'cartesian'
             )

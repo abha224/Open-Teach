@@ -113,6 +113,13 @@ DEPTH_RECORD_FPS = 10
 ALLEGRO_SAMPLE_OFFSET = 10 # For sampling states
 SAMPLE_WRITER_FPS = 5
 
+# iphone camera parameters
+IPHONE_CAM_INDEX = 60
+IPHONE_CAM_FPS = 30
+IPHONE_DEPTH_RESOLUTION = (192, 256)
+IPHONE_WIDTH = 960 
+IPHONE_HEIGHT = 720 
+
 # Deployment
 DEPLOY_REACH_THRESHOLD = 0.35
 DEPLOY_FREQ = 100
@@ -137,24 +144,27 @@ LEFT_ARM_IP = "192.168.86.216" # For Left XArm
 
 BIMANUAL_LEFT_HOME = [206, 0, 475, 3.142, 0, 0]
 #### MODIFYED FOR SCALE
-# BIMANUAL_RIGHT_HOME = [261, -200, 450, 3.142, 0, 0]
+# BIMANUAL_RIGHT_HOME = [206, 0, 475, 3.142, 0, 0]
+BIMANUAL_RIGHT_HOME = [206, 0, 475, 3.142, 0, 0]
 
 #### MODIFYED FOR Local Plug Insertion
 # BIMANUAL_RIGHT_HOME =  [325.0, -75.0, 320, 3.142, 0.0, 0.0]
 
 #### Default
-BIMANUAL_RIGHT_HOME = [206, 0, 475, 3.142, 0, 0]
+# BIMANUAL_RIGHT_HOME = [326, -90, 385, 3.142, 0, 0]
+# Abha: This needs to be changed so that teleop with oculus doesnt reset randomly in contrast to the cordinates for a particular task cordinates set in bimanual.py
+BIMANUAL_RIGHT_HOME[0] += 150  # do +30 to -30  Horizontal left right 
+BIMANUAL_RIGHT_HOME[1] -= 200
+BIMANUAL_RIGHT_HOME[2] -= 60  # up and down ( 130 down , 110 up )
+print("BIMANUAL_RIGHT_HOME", BIMANUAL_RIGHT_HOME)
 
-# BIMANUAL_RIGHT_HOME[0] += random.uniform(-30, 30)
-# BIMANUAL_RIGHT_HOME[1] += random.uniform(-30, 30)
-# BIMANUAL_RIGHT_HOME[2] += random.uniform(-10, 20) 
-
-ROBOT_HOME_POSE_AA = [206.0, -0.0, 475, 3.142, 0.0, 0.0]
+ROBOT_HOME_POSE_AA = [206.0, 0.0, 475, 3.142, 0.0, 0.0]
 ROBOT_HOME_JS = [0.072358, -0.95536, -0.040176, 0.661511, -0.032836, 1.616466, 0.047656]
 
 ############################# Stick Teleop #########################################
 # VR_TCP_ADDRESS = "tcp://10.19.205.42:5555"
-VR_TCP_HOST = "10.19.227.86"
+# VR_TCP_HOST = "10.21.74.2"
+VR_TCP_HOST = "10.21.10.255"
 VR_TCP_PORT = 5555
 VR_CONTROLLER_TOPIC = b"oculus_controller"
 

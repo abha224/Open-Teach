@@ -1,8 +1,8 @@
-host_address: '10.19.216.156'
+host_address: '10.21.116.247'
 left_xarm_ip: '192.168.86.216'
 right_xarm_ip: '192.168.86.230'
 
-teleop_address: '10.19.216.156'
+teleop_address: '10.21.116.247'
 # Transformation ports
 oculus_reciever_port: 8087
 left_hand_receiver_port: 8110
@@ -42,9 +42,17 @@ cartesian_publisher_port_left: 8116
 joint_publisher_port_left: 8117
 cartesian_command_publisher_port_left: 8121
 
-sensor_host_address: '10.19.216.156'
+sensor_host_address: '10.21.116.247'
 reskin_publisher_port: 12005
 digit_publisher_port: 13005
 
 reskin_port: /dev/ttyACM0
 reskin_num_mags: 10
+
+#iPhone USB TCP 
+iphone_usb_port: 14500  # TCP server on Mac or iPhone streamer host
+# ZMQ stream offsets (OpenTeach subscriber side)
+iphone_rgb_port_offset: 10100
+iphone_depth_port_offset: 10200
+iphone_conf_port_offset: 10300
+iphone_pose_port_offset: 10400

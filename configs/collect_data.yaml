@@ -2,11 +2,13 @@ defaults:
   - _self_
   - camera
   - network
+  - iphone_camera
   - robot: xarm_stick_reskin
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled 
 
-storage_path: /mnt/robotlab/abha/trials/
+# storage_path: /mnt/robotlab/abha/visk_rl_jax/exp_local/2025.06.26_bcrl_plug_insertion/0004_plug_insertion
+storage_path: /mnt/robotlab/abha/visk_rl_jax/exports/socket_aug/
 demo_num: 0
 sim_env: false
 use_sensor: true

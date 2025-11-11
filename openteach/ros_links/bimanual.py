@@ -9,6 +9,7 @@ import random
 from openteach.constants import SCALE_FACTOR, DEPLOY_FREQ, POLICY_FREQ
 from scipy.spatial.transform import Rotation as R
 from openteach.constants import *
+import ipdb
 
 class RobotControlMode(Enum):
     CARTESIAN_CONTROL = 0
@@ -22,6 +23,7 @@ class Robot(XArmAPI):
         self.set_gripper_enable(True)
         self.ip = ip
         self.gripper_start_state = gripper_start_state
+        self.eval_trial_counter = 0
 
     def clear(self):
         self.clean_error()
@@ -91,15 +93,19 @@ class Robot(XArmAPI):
         # modified_robot_home_pose_AA[2] -= 55
         
         # For Plug Insertion
-        # modified_robot_home_pose_AA[0] += 119
-        # modified_robot_home_pose_AA[1] -= 75
-        # modified_robot_home_pose_AA[2] -= 155
+        modified_robot_home_pose_AA[0] += 60
+        modified_robot_home_pose_AA[1] -= 110
+        modified_robot_home_pose_AA[2] -= 60 
         
         # # For USB Insertion
         # modified_robot_home_pose_AA[0] += 119
         # modified_robot_home_pose_AA[1] -= 75
         # modified_robot_home_pose_AA[2] -= 155
         
+        # Abha: testing
+        # modified_robot_home_pose_AA[0] += 150
+        # modified_robot_home_pose_AA[1] -= 110
+        # modified_robot_home_pose_AA[2] -= 0
         
         def random_outside(inner_min, inner_max, outer_min, outer_max):
             # 50/50 pick which side
@@ -116,9 +122,22 @@ class Robot(XArmAPI):
                                loop_rate_hz=20.0,
                                tol=1)
 
-        # modified_robot_home_pose_AA[0] += random.uniform(-30, 30) #x_offset 
-        # modified_robot_home_pose_AA[1] += random.uniform(-30, 30) #y_offset
-        # # modified_robot_home_pose_AA[2] += random.uniform(-20, -10)
+        # x_offset, y_offset = -30.0, -30.0
+        # Abha: Eval Trial offsets (uncomment one for each eval run)
+        # x_offset, y_offset = 10.0,  10.0
+        # x_offset, y_offset = -40.0,  40.0
+        # x_offset, y_offset = -10.0,   0.0
+        # x_offset, y_offset =  0.0,  -20.0
+        # x_offset, y_offset =  20.0, -10.0
+        # x_offset, y_offset =  30.0,  30.0
+        # x_offset, y_offset = -25.0,  5.0
+        # x_offset, y_offset =  5.0, -25.0
+        # x_offset, y_offset =  15.0,  0.0
+
+        # Abha: change!
+        modified_robot_home_pose_AA[0] += x_offset #random.uniform(-30, 30) 
+        modified_robot_home_pose_AA[1] += y_offset  #random.uniform(-30, 30) 
+        # modified_robot_home_pose_AA[2] += random.uniform(-20, -10)
         
         print("Set State to:", modified_robot_home_pose_AA)
         self.smooth_servo_move(modified_robot_home_pose_AA,

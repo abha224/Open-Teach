@@ -5,6 +5,7 @@ from abc import ABC
 from openteach.components.sensors.reskin import ReskinSensorPublisher
 # from openteach.components.sensors.digit import DigitSensorPublisher
 from .recorders.image import RGBImageRecorder, DepthImageRecorder, FishEyeImageRecorder
+from .recorders.iphone_recorder import IPhoneCameraRecorder
 from .recorders.robot_state import RobotInformationRecord
 from .recorders.sim_state import SimInformationRecord
 from .recorders.sensors import XelaSensorRecorder, ReskinSensorZMQRecorder
@@ -91,6 +92,38 @@ class FishEyeCameras(ProcessInstantiator):
             self.processes.append(Process(
                 target = self._start_component,
                 args = (cam_idx, cam_serial_num, )
+            ))
+
+class IPhoneUSBCameras(ProcessInstantiator):
+    """
+    Returns all iPhone USB camera processes. Start the list of processes to start
+    the camera stream.
+    """
+    def __init__(self, configs):
+        super().__init__(configs)
+        self._init_camera_processes()
+
+    def _start_component(self, cam_idx, iphone_cfg):
+        component = IPhoneUSBCamera(
+            cam_idx=cam_idx,
+            stream_configs=dict(
+                host=self.configs.host_address,
+                port=self.configs.iphone_rgb_port_offset + cam_idx,
+                depth_port_add=self.configs.iphone_depth_port_offset,
+                set_port_offset=self.configs.iphone_rgb_port_offset
+            ),
+            usb_tcp_host=iphone_cfg.get("usb_host", "127.0.0.1"),
+            usb_tcp_port=iphone_cfg.get("usb_port", 14500),
+            stream_oculus=True if self.configs.stream_oculus and self.configs.oculus_cam == cam_idx else False,
+        )
+        component.stream()
+
+    def _init_camera_processes(self):
+        for camera in self.configs.iphone_cameras:
+            cam_idx = camera["id"]
+            self.processes.append(Process(
+                target=self._start_component,
+                args=(cam_idx, camera)
             ))
 
 class ReskinSensors(ProcessInstantiator):
@@ -314,6 +347,28 @@ class Collector(ProcessInstantiator):
                     # args = (cam_idx + 1 + fisheye_cam_idx, )
                     args = (fisheye_cam_idx, )
                 ))
+            # ---- iPhone USB Camera Recorder (RGB + Depth + Pose) ----
+            if hasattr(self.configs, "iphone_cameras"):
+                print("Initializing iPhone USB camera recorders")
+                for cam in self.configs.iphone_cameras:
+                    cam_idx = cam["id"]
+
+                    def _start_iphone_component(idx):
+                        component = IPhoneCameraRecorder(
+                            host=self.configs.host_address,
+                            rgb_stream_port=self.configs.iphone_cam_port_offset + idx,
+                            depth_stream_port=self.configs.iphone_depth_port_offset + idx,
+                            pose_stream_port=self.configs.iphone_pose_port_offset + idx,
+                            storage_path=self._storage_path,
+                            cam_id=idx  # Ensures correct file naming like cam_60_...
+                        )
+                        component.stream()
+
+                    self.processes.append(Process(
+                        target=_start_iphone_component,
+                        args=(cam_idx,)
+                    ))
+
         else:
           
             for cam_idx in range(self.configs.num_cams):

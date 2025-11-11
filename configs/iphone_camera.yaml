@@ -1,0 +1,19 @@
+# iPhone USB RGBD integration (additional camera family)
+defaults:
+  - _self_
+  - network
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+iphone_cameras:
+  - id: 60
+
+enable_confidence: False      # record confidence alongside depth
+
+oculus_cam: 0 # First camera
+stream_oculus: False
+
+hydra:  
+  output_subdir: null  
+  run:  
+    dir: .

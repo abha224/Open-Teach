@@ -1,2 +1,9 @@
 from .component import Component
-from .initializers import RealsenseCameras, TeleOperator, Collector, ReskinSensors, DigitSensors
+from .initializers import (
+    RealsenseCameras, 
+    TeleOperator, 
+    Collector, 
+    ReskinSensors, 
+    DigitSensors,
+    IPhoneUSBCamera
+)
