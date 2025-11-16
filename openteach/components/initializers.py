@@ -109,7 +109,8 @@ class IPhoneUSBCameras(ProcessInstantiator):
             stream_configs=dict(
                 host=self.configs.host_address,
                 port=self.configs.iphone_rgb_port_offset + cam_idx,
-                depth_port_add=self.configs.iphone_depth_port_offset,
+                depth_port_add=self.configs.iphone_depth_port_offset - self.configs.iphone_rgb_port_offset,
+                pose_port_add=self.configs.iphone_pose_port_offset - self.configs.iphone_rgb_port_offset,
                 set_port_offset=self.configs.iphone_rgb_port_offset
             ),
             usb_tcp_host=iphone_cfg.get("usb_host", "127.0.0.1"),
@@ -356,11 +357,10 @@ class Collector(ProcessInstantiator):
                     def _start_iphone_component(idx):
                         component = IPhoneCameraRecorder(
                             host=self.configs.host_address,
-                            rgb_stream_port=self.configs.iphone_cam_port_offset + idx,
+                            rgb_stream_port=self.configs.iphone_rgb_port_offset + idx,
                             depth_stream_port=self.configs.iphone_depth_port_offset + idx,
                             pose_stream_port=self.configs.iphone_pose_port_offset + idx,
                             storage_path=self._storage_path,
-                            cam_id=idx  # Ensures correct file naming like cam_60_...
                         )
                         component.stream()
 

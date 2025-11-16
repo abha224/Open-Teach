@@ -98,7 +98,13 @@ class RGBImageRecorder(Recorder):
         store_pickle_data(self._metadata_filename, self.metadata)
         print('Stored the video in {}.'.format(self._recorder_file_name))
         print('Stored the metadata in {}.'.format(self._metadata_filename))
-        print(f'{self._filename} Data duration: ', (self.timestamps[-1] - self.timestamps[0]) / 1000.)
+        
+        # Guard against empty timestamps
+        if len(self.timestamps) > 1:
+            duration = (self.timestamps[-1] - self.timestamps[0]) / 1000.
+            print(f'{self._filename} Data duration: {duration}s')
+        else:
+            print(f'{self._filename} WARNING: No frames captured (0 frames received)')
 
 
 class DepthImageRecorder(Recorder):
@@ -169,14 +175,24 @@ class DepthImageRecorder(Recorder):
 
         # Writing to dataset - hdf5 is faster and compresses more than blosc zstd with clevel 9
         print('Compressing depth data...')
-        with h5py.File(self._recorder_file_name, "w") as file:
-            stacked_frames = np.array(self.depth_frames, dtype = np.uint16)
-            file.create_dataset("depth_images", data = stacked_frames, compression="gzip", compression_opts = 6)
-            
-            timestamps = np.array(self.timestamps, np.float64)
-            file.create_dataset("timestamps", data = timestamps, compression="gzip", compression_opts = 6)
-            
-            file.update(self.metadata)
+        
+        # Guard against empty data
+        if len(self.depth_frames) == 0:
+            print(f'{self._filename} WARNING: No depth frames captured')
+            # Create empty dataset to maintain structure
+            with h5py.File(self._recorder_file_name, "w") as file:
+                file.create_dataset("depth_images", data=np.array([], dtype=np.uint16).reshape(0, 0, 0), compression="gzip", compression_opts=6)
+                file.create_dataset("timestamps", data=np.array([], dtype=np.float64), compression="gzip", compression_opts=6)
+                file.update(self.metadata)
+        else:
+            with h5py.File(self._recorder_file_name, "w") as file:
+                stacked_frames = np.array(self.depth_frames, dtype = np.uint16)
+                file.create_dataset("depth_images", data = stacked_frames, compression="gzip", compression_opts = 6)
+                
+                timestamps = np.array(self.timestamps, np.float64)
+                file.create_dataset("timestamps", data = timestamps, compression="gzip", compression_opts = 6)
+                
+                file.update(self.metadata)
             
         print('Saved compressed depth data in {}.'.format(self._recorder_file_name))
 
@@ -258,3 +274,10 @@ class FishEyeImageRecorder(Recorder):
         store_pickle_data(self._metadata_filename, self.metadata)
         print('Stored the video in {}.'.format(self._recorder_file_name))
         print('Stored the metadata in {}.'.format(self._metadata_filename))
+        
+        # Guard against empty frames (FishEye)
+        if len(self.frames) > 0:
+            store_pickle_data(self._pickle_filename, np.array(self.frames))
+            print(f'Stored {len(self.frames)} frames in {self._pickle_filename}')
+        else:
+            print(f'{self._filename} WARNING: No frames captured')

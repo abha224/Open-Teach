@@ -116,7 +116,7 @@ SAMPLE_WRITER_FPS = 5
 # iphone camera parameters
 IPHONE_CAM_INDEX = 60
 IPHONE_CAM_FPS = 30
-IPHONE_DEPTH_RESOLUTION = (192, 256)
+IPHONE_DEPTH_RESOLUTION = (256, 192)  # (height, width) - actual depth frames are (256, 192)
 IPHONE_WIDTH = 960 
 IPHONE_HEIGHT = 720 
 
@@ -146,9 +146,10 @@ BIMANUAL_LEFT_HOME = [206, 0, 475, 3.142, 0, 0]
 #### MODIFYED FOR SCALE
 # BIMANUAL_RIGHT_HOME = [206, 0, 475, 3.142, 0, 0]
 BIMANUAL_RIGHT_HOME = [206, 0, 475, 3.142, 0, 0]
+# BIMANUAL_RIGHT_HOME = [331.0, -129.1, 372.2, 3.142, 0.0, 0.0]
 
 #### MODIFYED FOR Local Plug Insertion
-# BIMANUAL_RIGHT_HOME =  [325.0, -75.0, 320, 3.142, 0.0, 0.0]
+BIMANUAL_RIGHT_HOME =  [325.0, -75.0, 320, 3.142, 0.0, 0.0]
 
 #### Default
 # BIMANUAL_RIGHT_HOME = [326, -90, 385, 3.142, 0, 0]
@@ -159,12 +160,14 @@ BIMANUAL_RIGHT_HOME[2] -= 60  # up and down ( 130 down , 110 up )
 print("BIMANUAL_RIGHT_HOME", BIMANUAL_RIGHT_HOME)
 
 ROBOT_HOME_POSE_AA = [206.0, 0.0, 475, 3.142, 0.0, 0.0]
+# ROBOT_HOME_POSE_AA = [331.0, -129.1, 372.2, 3.142, 0.0, 0.0]
+
 ROBOT_HOME_JS = [0.072358, -0.95536, -0.040176, 0.661511, -0.032836, 1.616466, 0.047656]
 
 ############################# Stick Teleop #########################################
 # VR_TCP_ADDRESS = "tcp://10.19.205.42:5555"
 # VR_TCP_HOST = "10.21.74.2"
-VR_TCP_HOST = "10.21.10.255"
+VR_TCP_HOST = "10.21.53.105"
 VR_TCP_PORT = 5555
 VR_CONTROLLER_TOPIC = b"oculus_controller"
 

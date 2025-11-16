@@ -5,15 +5,22 @@ import numpy as np
 import cv2
 try:
     import lzfse
-    _HAS_LZFSE = True
-except Exception:
-    _HAS_LZFSE = False
-    print("Warning: LZFSE not available, depth stream will not work")
+except ImportError:
+    try:
+        import pyliblzfse as lzfse
+    except ImportError:
+        try:
+            import liblzfse as lzfse
+        except ImportError:
+            lzfse = None
+            print("Warning: LZFSE not available, depth stream will not work")
+
+_HAS_LZFSE = lzfse is not None
 
 from openteach.components import Component
 from openteach.utils.timer import FrequencyTimer
 from openteach.utils.images import rescale_image
-from openteach.utils.network import ZMQCameraPublisher, ZMQCompressedImageTransmitter
+from openteach.utils.network import ZMQCameraPublisher, ZMQCompressedImageTransmitter, ZMQKeypointPublisher
 from openteach.constants import VIZ_PORT_OFFSET, CAM_FPS
 
 # Wire format (must match your iOS USBManager)
@@ -56,6 +63,14 @@ class IPhoneUSBCamera(Component):
             self.conf_pub = ZMQCameraPublisher(
                 host=stream_configs["host"],
                 port=stream_configs["port"] + stream_configs["conf_port_add"],  # e.g., conf offset family
+            )
+
+        # Pose/Keypoint publisher
+        self.pose_pub = None
+        if "pose_port_add" in stream_configs:
+            self.pose_pub = ZMQKeypointPublisher(
+                host=stream_configs["host"],
+                port=stream_configs["port"] + stream_configs["pose_port_add"],
             )
 
         # Optional compressed viz stream for Oculus (same style as FishEye)
@@ -120,7 +135,15 @@ class IPhoneUSBCamera(Component):
 
                 # Intrinsics (unused here)
                 off += struct.calcsize(_INTR_FMT)
-                # Pose (unused here)
+                
+                # Pose (device motion - extract for publishing)
+                pose_data = struct.unpack_from(_POSE_FMT, body, off)
+                # pose_data = (qx, qy, qz, qw, tx, ty, tz)
+                pose_dict = {
+                    "timestamp": time.time(),
+                    "q": list(pose_data[:4]),  # quaternion [qx, qy, qz, qw]
+                    "t": list(pose_data[4:7]),  # translation [tx, ty, tz]
+                }
                 off += struct.calcsize(_POSE_FMT)
 
                 # RGB (JPEG)
@@ -168,6 +191,10 @@ class IPhoneUSBCamera(Component):
                     # Publish as an 8-bit single-channel image
                     self.conf_pub.pub_rgb_image(conf, ts)
 
+                # Publish: Pose/Keypoints (device motion)
+                if self.pose_pub is not None:
+                    self.pose_pub.pub_keypoints(pose_dict, f"cam_{self.cam_idx}_pose")
+
                 self.timer.end_loop()
 
             except KeyboardInterrupt:
@@ -189,5 +216,6 @@ class IPhoneUSBCamera(Component):
         self.rgb_pub.stop()
         self.depth_pub.stop()
         if self.conf_pub: self.conf_pub.stop()
+        if self.pose_pub: self.pose_pub.stop()
         if self.rgb_viz_pub: self.rgb_viz_pub.stop()
         print(f"[iPhoneUSB] shutdown for cam_idx={self.cam_idx}")
