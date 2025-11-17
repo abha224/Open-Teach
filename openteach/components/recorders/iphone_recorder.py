@@ -126,7 +126,11 @@ class IPhoneCameraRecorder(Recorder):
         Write depth frame to MP4 video.
         
         Depth frames arrive as float32 meters in shape (256, 192).
-        Normalize to [0, 255] 8-bit grayscale, convert to BGR, write to video.
+        
+        Use min/max scaling to properly visualize: (x - x.min()) / (x.max() - x.min())
+        This ensures all depth data is visible regardless of actual range.
+        Then scale to [0, 255] for video encoding.
+        
         If OpenCV writer fails, buffer for ffmpeg fallback.
         """
         # Initialize writer once on first frame
@@ -138,15 +142,34 @@ class IPhoneCameraRecorder(Recorder):
             if depth_m.dtype != np.float32:
                 depth_m = depth_m.astype(np.float32)
             
+            # Log first frame statistics to diagnose value ranges
+            if not hasattr(self, '_depth_stats_logged'):
+                print(f"[IPhoneRecorder] DEPTH STATS (frame 0):")
+                print(f"  Shape: {depth_m.shape}")
+                print(f"  Min: {depth_m.min():.4f} m")
+                print(f"  Max: {depth_m.max():.4f} m")
+                print(f"  Mean: {depth_m.mean():.4f} m")
+                print(f"  Std: {depth_m.std():.4f} m")
+                self._depth_stats_logged = True
+            
             # Incoming shape is (256, 192) = (height, width)
             # Resize if needed to match expected dimensions
             if depth_m.shape != (self._depth_h, self._depth_w):
                 print(f"[IPhoneRecorder] Resizing depth from {depth_m.shape} to ({self._depth_h}, {self._depth_w})")
                 depth_m = cv2.resize(depth_m, (self._depth_w, self._depth_h), interpolation=cv2.INTER_LINEAR)
             
-            # Normalize to [0, 1] based on visualization min/max
-            mn, mx = self._vis_min, self._vis_max
-            d_norm = np.clip((depth_m - mn) / (mx - mn + 1e-6), 0, 1)
+            # Use min/max scaling for proper visualization
+            # This brings all depth data into [0, 1] range regardless of actual metric values
+            d_min = depth_m.min()
+            d_max = depth_m.max()
+            
+            if d_max > d_min:
+                # Normal case: scale by actual min/max
+                d_norm = (depth_m - d_min) / (d_max - d_min)
+            else:
+                # Edge case: all values identical
+                d_norm = np.zeros_like(depth_m)
+            
             d8 = (d_norm * 255).astype(np.uint8)
             
             # Convert grayscale to BGR
