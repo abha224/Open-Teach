@@ -142,6 +142,8 @@ class IPhoneCameraRecorder(Recorder):
             if depth_m.dtype != np.float32:
                 depth_m = depth_m.astype(np.float32)
             
+            if depth_m.max() < 1.0:  # values < 1 meter → definitely mm range
+                depth_m = depth_m * 0.001  # convert mm → m
             # Log first frame statistics to diagnose value ranges
             if not hasattr(self, '_depth_stats_logged'):
                 print(f"[IPhoneRecorder] DEPTH STATS (frame 0):")
@@ -237,15 +239,39 @@ class IPhoneCameraRecorder(Recorder):
 
                 # Depth
                 try:
-                    depth_mm, _ = self.depth_sub.recv_depth_image()
-                    depth_m = depth_mm.astype(np.float32) / 1000.0
+                    depth_received, _ = self.depth_sub.recv_depth_image()
+                    
+                    # Log raw received data to diagnose conversion issues
+                    if depth_frame_count == 0:
+                        print(f"[IPhoneRecorder] DEPTH RECEIVED (frame 0):")
+                        print(f"  dtype: {depth_received.dtype}")
+                        print(f"  shape: {depth_received.shape}")
+                        print(f"  min: {depth_received.min():.4f}")
+                        print(f"  max: {depth_received.max():.4f}")
+                        print(f"  mean: {depth_received.mean():.4f}")
+                    
+                    # Depth arrives as float32 in millimeters from iphone_usb_cam.py
+                    # No need to convert, just use as-is and convert to meters in _write_depth_visualization
+                    depth_m = depth_received.astype(np.float32)
+                    
+                    # Log after "conversion" (which is just casting)
+                    if depth_frame_count == 0:
+                        print(f"[IPhoneRecorder] DEPTH AFTER CAST (frame 0):")
+                        print(f"  dtype: {depth_m.dtype}")
+                        print(f"  min: {depth_m.min():.4f} mm")
+                        print(f"  max: {depth_m.max():.4f} mm")
+                        print(f"  mean: {depth_m.mean():.4f} mm")
+                    
                     bin_path = os.path.join(self.depth_bin_dir, f"frame_{self.num_frames:06d}.bin")
+                    # Save in original units (mm as float32)
                     depth_m.tofile(bin_path)
                     self._write_depth_visualization(depth_m)
                     depth_frame_count += 1
                 except Exception as e:
                     if depth_frame_count == 0 and self.num_frames < 10:
                         print(f"[IPhoneRecorder] Depth receive error (frame {self.num_frames}): {e}")
+                        import traceback
+                        traceback.print_exc()
 
                 # Pose
                 try:

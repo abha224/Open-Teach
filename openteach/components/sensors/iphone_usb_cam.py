@@ -132,6 +132,10 @@ class IPhoneUSBCamera(Component):
                 (rgbW, rgbH, dW, dH, confW, confH,
                  rgbSize, depthSize, confSize, misc, devType) = struct.unpack_from(_RECORD3D_FMT, body, off)
                 off += rec_sz
+                
+                # Log frame header
+                # print(f"[iPhoneUSB] FRAME HEADER - RGB: {rgbW}x{rgbH} ({rgbSize}B), "
+                #       f"Depth: {dW}x{dH} ({depthSize}B), Conf: {confW}x{confH} ({confSize}B)")
 
                 # Intrinsics (unused here)
                 off += struct.calcsize(_INTR_FMT)
@@ -156,11 +160,28 @@ class IPhoneUSBCamera(Component):
                 if depthSize > 0 and _HAS_LZFSE:
                     depth_comp = body[off: off + depthSize]
                     off += depthSize
+                    
+                    # Log raw payload information
+                    # expected_decompressed_size = dH * dW * 4  # float32 = 4 bytes
+                    # print(f"[iPhoneUSB] DEPTH PAYLOAD - Compressed size: {depthSize} bytes, "
+                    #       f"Expected decompressed: {expected_decompressed_size} bytes, "
+                    #       f"Dimensions: {dW}x{dH}")
+                    
                     try:
                         depth_raw = lzfse.decompress(depth_comp)
+                        # actual_decompressed_size = len(depth_raw)
+                        # print(f"[iPhoneUSB] DEPTH DECOMPRESSED - Actual size: {actual_decompressed_size} bytes, "
+                        #       f"Expected: {expected_decompressed_size} bytes")
+                        
                         depth = np.frombuffer(depth_raw, np.float32).reshape((dH, dW))
+                        print(f"[iPhoneUSB] DEPTH ARRAY - Shape: {depth.shape}, dtype: {depth.dtype}, "
+                              f"Min: {depth.min():.4f}mm, Max: {depth.max():.4f}mm, Mean: {depth.mean():.4f}mm")
                     except Exception as e:
                         print(f"[iPhoneUSB] depth decode error: {e}")
+                elif depthSize > 0 and not _HAS_LZFSE:
+                    print(f"[iPhoneUSB] WARNING: Depth payload received ({depthSize} bytes) but LZFSE not available - skipping")
+                else:
+                    print(f"[iPhoneUSB] No depth payload in this frame (depthSize=0)")
 
                 # Confidence
                 conf = None

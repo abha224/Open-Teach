@@ -172,7 +172,7 @@ class ZMQCameraSubscriber(threading.Thread):
         data = pickle.loads(striped_data)
         depth_image = bl.unpack_array(data['depth_image'])
         
-        return np.array(depth_image, dtype = np.int16), data['timestamp']
+        return np.array(depth_image, dtype = np.float32), data['timestamp']
         
     def stop(self):
         print('Closing the subscriber socket in {}:{}.'.format(self._host, self._port))

@@ -1,6 +1,6 @@
 robot_name: xarm
 
-gripper_start_state: open #open or anything else = closed 
+gripper_start_state: closed #open or anything else = closed 
 
 # Detector used to teleoperate the robot
 detector:

@@ -114,6 +114,7 @@ class XArmOperator(Operator):
         # Get the initial pose of the robot
         home_pose=np.array(self.robot.get_cartesian_position())
         self.robot_init_H = self.robot_pose_aa_to_affine(home_pose)
+        print(f"[XArmOperator] Initial home_pose after reset: {home_pose}")
         self._timer = FrequencyTimer(BIMANUAL_VR_FREQ)
 
         self.use_filter = use_filter
@@ -198,23 +199,34 @@ class XArmOperator(Operator):
         
         
         if self.is_first_frame:
-            self.robot.home()
-            time.sleep(2)
+            print("[XArmOperator] First frame - capturing current robot position (NOT calling home())")
             self.home_pose = self.robot._controller.robot.get_position_aa()[1]
             self.home_affine = self.robot_pose_aa_to_affine(self.home_pose)
+            print(f"[XArmOperator] Captured home_pose: {self.home_pose}")
             self.is_first_frame = False
 
         if self.controller_state.right_a:
             # Pressing A button calibrates first frame and starts teleop for right robot.
             self.start_teleop = True
             self.init_affine = self.controller_state.right_affine
+            # Get current actual robot position when A is pressed
+            current_robot_pose = np.array(self.robot.get_cartesian_position())
+            print(f"[XArmOperator] A PRESSED - Starting teleop")
+            print(f"[XArmOperator] Initial home_pose (from init): {self.affine_to_robot_pose_aa(self.home_affine)}")
+            print(f"[XArmOperator] Current robot pose (when A pressed): {current_robot_pose}")
+            print(f"[XArmOperator] Difference: {current_robot_pose - self.affine_to_robot_pose_aa(self.home_affine)}")
+            self.debug_print_robot_state()
             print("Starting teleop")
+
         if self.controller_state.right_b:
             # Pressing B button stops teleop. And resets calibration frames to None  for right robot.
             self.start_teleop = False
             self.init_affine = None
             self.home_pose = self.robot._controller.robot.get_position_aa()[1]
             self.home_affine = self.robot_pose_aa_to_affine(self.home_pose)
+            print(f"[XArmOperator] B PRESSED - Pausing teleop")
+            print(f"[XArmOperator] New home pose: {self.home_pose}")
+            self.debug_print_robot_state()
             print("Pausing teleop")
 
         
@@ -324,3 +336,23 @@ class XArmOperator(Operator):
 
         if self.start_teleop:
             self.robot.arm_control(des_pose)
+
+    def debug_print_robot_state(self):
+        status, pose = self.robot._controller.robot.get_position_aa()
+        # print("Cartesian Pose (axis-angle mm, rad):", pose)
+
+        # Cartesian xyz+axis
+        # print("Cartesian xyz:", pose[:3])
+        # print("Cartesian rotvec:", pose[3:])
+
+        # Cartesian affine
+        # affine = self.robot_pose_aa_to_affine(np.array(pose))
+        # print("Affine:\n", affine)
+
+        # Joint state
+        joint_state = self.robot.get_joint_position()
+        print("Joints:", joint_state)
+
+        # Gripper
+        grip = self.robot._controller.robot.get_gripper_position()
+        print("Gripper Raw:", grip)

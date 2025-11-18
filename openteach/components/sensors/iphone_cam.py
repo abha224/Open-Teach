@@ -52,10 +52,6 @@ class IPhoneUSBCamera(Component):
 
         self._start_iphone_camera()
 
-
-    # ------------------------------------------------------
-    # Setup ZMQ subscriptions
-    # ------------------------------------------------------
     def _make_sub(self, topic):
         ctx = zmq.Context.instance()
         sub = ctx.socket(zmq.SUB)
@@ -72,10 +68,6 @@ class IPhoneUSBCamera(Component):
         self._listening = True
         Thread(target=self._listen_streams, daemon=True).start()
 
-
-    # ------------------------------------------------------
-    # Listener thread — updates latest frames
-    # ------------------------------------------------------
     def _listen_streams(self):
         while self._listening:
             self._receive_rgb()
@@ -120,10 +112,6 @@ class IPhoneUSBCamera(Component):
         except zmq.Again:
             pass
 
-
-    # ------------------------------------------------------
-    # Open-Teach Standard Streaming Function
-    # ------------------------------------------------------
     def stream(self):
         self.notify_component_start(f"iPhone cam_{IPHONE_CAM_INDEX}")
 
@@ -137,8 +125,12 @@ class IPhoneUSBCamera(Component):
 
                 if self.depth_frame:
                     ts, depth_m = self.depth_frame
-                    depth_u16 = (depth_m * 1000).astype(np.uint16)
-                    self.depth_publisher.pub_depth_image(depth_u16, ts)
+                    # depth_u16 = (depth_m * 1000).astype(np.uint16)
+                    # self.depth_publisher.pub_depth_image(depth_u16, ts)
+                    self.depth_publisher.pub_depth_image(
+                        depth_m.astype(np.float32),
+                        ts
+                    )
 
                 if self.pose_frame:
                     ts, t, q = self.pose_frame
