@@ -174,8 +174,8 @@ class IPhoneUSBCamera(Component):
                         #       f"Expected: {expected_decompressed_size} bytes")
                         
                         depth = np.frombuffer(depth_raw, np.float32).reshape((dH, dW))
-                        print(f"[iPhoneUSB] DEPTH ARRAY - Shape: {depth.shape}, dtype: {depth.dtype}, "
-                              f"Min: {depth.min():.4f}mm, Max: {depth.max():.4f}mm, Mean: {depth.mean():.4f}mm")
+                        # print(f"[iPhoneUSB] DEPTH ARRAY - Shape: {depth.shape}, dtype: {depth.dtype}, "
+                            #   f"Min: {depth.min():.4f}mm, Max: {depth.max():.4f}mm, Mean: {depth.mean():.4f}mm")
                     except Exception as e:
                         print(f"[iPhoneUSB] depth decode error: {e}")
                 elif depthSize > 0 and not _HAS_LZFSE:

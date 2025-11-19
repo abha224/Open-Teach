@@ -61,7 +61,7 @@ class IPhoneUSBCamera(Component):
         return sub
 
     def _start_iphone_camera(self):
-        self.rgb_sub = self._make_sub("cam_60_rgb")
+        self.rgb_sub = self._make_sub("cam_60_rgb_video")
         self.depth_sub = self._make_sub("cam_60_depth")
         self.pose_sub = self._make_sub("cam_60_pose")
 
