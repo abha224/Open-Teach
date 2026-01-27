@@ -66,6 +66,7 @@ class ZMQKeypointPublisher(object):
 
 class ZMQKeypointSubscriber(threading.Thread):
     def __init__(self, host, port, topic):
+        super().__init__(daemon=True)  # Properly initialize threading.Thread
         self._host, self._port, self._topic = host, port, topic
         self._init_subscriber()
 
@@ -136,6 +137,7 @@ class ZMQCameraPublisher(object):
 
 class ZMQCameraSubscriber(threading.Thread):
     def __init__(self, host, port, topic_type):
+        super().__init__(daemon=True)  # Properly initialize threading.Thread
         self._host, self._port, self._topic_type = host, port, topic_type
         self._init_subscriber()
 
@@ -143,8 +145,16 @@ class ZMQCameraSubscriber(threading.Thread):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.SUB)
         self.socket.setsockopt(zmq.CONFLATE, 1)
-        print('tcp://{}:{}'.format(self._host, self._port))
-        self.socket.connect('tcp://{}:{}'.format(self._host, self._port))
+        # Add timeout for iPhone camera reliability
+        self.socket.setsockopt(zmq.RCVTIMEO, 5000)  # 5 second timeout
+        self.socket.setsockopt(zmq.LINGER, 0)  # Don't linger on close
+        
+        print('Connecting to tcp://{}:{}'.format(self._host, self._port))
+        try:
+            self.socket.connect('tcp://{}:{}'.format(self._host, self._port))
+        except Exception as e:
+            print(f'Failed to connect to camera at {self._host}:{self._port}: {e}')
+            raise
 
         if self._topic_type == 'Intrinsics':
             self.socket.setsockopt(zmq.SUBSCRIBE, b"intrinsics")
@@ -159,20 +169,34 @@ class ZMQCameraSubscriber(threading.Thread):
         return pickle.loads(raw_array)
 
     def recv_rgb_image(self):
-        raw_data = self.socket.recv()
-        data = raw_data.lstrip(b"rgb_image ")
-        data = pickle.loads(data)
-        encoded_data = np.fromstring(base64.b64decode(data['rgb_image']), np.uint8)
-        return cv2.imdecode(encoded_data, 1), data['timestamp']
+        try:
+            raw_data = self.socket.recv()
+            data = raw_data.lstrip(b"rgb_image ")
+            data = pickle.loads(data)
+            encoded_data = np.fromstring(base64.b64decode(data['rgb_image']), np.uint8)
+            return cv2.imdecode(encoded_data, 1), data['timestamp']
+        except zmq.Again:
+            print(f"Timeout receiving RGB image from {self._host}:{self._port}")
+            return None, None
+        except Exception as e:
+            print(f"Error receiving RGB image from {self._host}:{self._port}: {e}")
+            return None, None
         
     def recv_depth_image(self):
-        raw_data = self.socket.recv()
-        striped_data = raw_data.lstrip(b"depth_image ")
-        
-        data = pickle.loads(striped_data)
-        depth_image = bl.unpack_array(data['depth_image'])
-        
-        return np.array(depth_image, dtype = np.float32), data['timestamp']
+        try:
+            raw_data = self.socket.recv()
+            striped_data = raw_data.lstrip(b"depth_image ")
+            
+            data = pickle.loads(striped_data)
+            depth_image = bl.unpack_array(data['depth_image'])
+            
+            return np.array(depth_image, dtype = np.float32), data['timestamp']
+        except zmq.Again:
+            print(f"Timeout receiving depth image from {self._host}:{self._port}")
+            return None, None
+        except Exception as e:
+            print(f"Error receiving depth image from {self._host}:{self._port}: {e}")
+            return None, None
         
     def stop(self):
         print('Closing the subscriber socket in {}:{}.'.format(self._host, self._port))
@@ -207,6 +231,7 @@ class ZMQCompressedImageTransmitter(object):
 
 class ZMQCompressedImageReciever(threading.Thread):
     def __init__(self, host, port):
+        super().__init__(daemon=True)  # Properly initialize threading.Thread
         self._host, self._port = host, port
         # self._init_pull_socket()
         self._init_subscriber()
@@ -237,6 +262,7 @@ class ZMQCompressedImageReciever(threading.Thread):
 
 class ZMQButtonFeedbackSubscriber(threading.Thread):
     def __init__(self, host, port):
+        super().__init__(daemon=True)  # Properly initialize threading.Thread
         self._host, self._port = host, port
         # self._init_pull_socket()
         self._init_subscriber()

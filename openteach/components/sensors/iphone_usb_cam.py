@@ -142,12 +142,14 @@ class IPhoneUSBCamera(Component):
                 
                 # Pose (device motion - extract for publishing)
                 pose_data = struct.unpack_from(_POSE_FMT, body, off)
+                # print(f"[iPhoneUSB] Pose received: {pose_data}")
                 # pose_data = (qx, qy, qz, qw, tx, ty, tz)
                 pose_dict = {
                     "timestamp": time.time(),
                     "q": list(pose_data[:4]),  # quaternion [qx, qy, qz, qw]
                     "t": list(pose_data[4:7]),  # translation [tx, ty, tz]
                 }
+                # print(f"[iPhoneUSB] Pose data: q={pose_dict['q']}, t={pose_dict['t']}, timestamp={pose_dict['timestamp']}")
                 off += struct.calcsize(_POSE_FMT)
 
                 # RGB (JPEG)

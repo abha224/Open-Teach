@@ -16,17 +16,17 @@ from openteach.constants import (
 
 class IPhoneCameraRecorder(Recorder):
     """
-    Records the iPhone cam_60 RGB + Depth + Pose streams.
+    Records the iPhone iphone RGB + Depth + Pose streams.
 
     Outputs (per demo):
-      cam_60_rgb.avi
-      cam_60_rgb.metadata
+      iphone_rgb.avi
+      iphone_rgb.metadata
 
-      cam_60_depth.avi
-      cam_60_depth_images/*.bin
-      cam_60_depth.metadata
+      iphone_depth.avi
+      iphone_depth_images/*.bin
+      iphone_depth.metadata
 
-      cam_60_pose.h5
+      iphone_pose.h5
     """
 
     def __init__(
@@ -55,11 +55,11 @@ class IPhoneCameraRecorder(Recorder):
         self.depth_sub = ZMQCameraSubscriber(host=host, port=depth_stream_port, topic_type="Depth")
         self.pose_sub = ZMQKeypointSubscriber(host=host, port=pose_stream_port, topic="cam_60_pose")
 
-        self.rgb_path = os.path.join(self._storage, "cam_60_rgb_video.avi")
-        self.depth_path = os.path.join(self._storage, "cam_60_depth.avi")
-        self.pose_h5_path = os.path.join(self._storage, "cam_60_pose.h5")
-
-        self.depth_bin_dir = os.path.join(self._storage, "cam_60_depth_images")
+        self.rgb_path = os.path.join(self._storage, "iphone_rgb_video.avi")
+        self.depth_path = os.path.join(self._storage, "iphone_depth.avi")
+        self.pose_h5_path = os.path.join(self._storage, "iphone_pose.h5")
+        self.pose_txt_path = os.path.join(self._storage, "iphone_pose.txt")
+        self.depth_bin_dir = os.path.join(self._storage, "iphone_depth_images")
         os.makedirs(self.depth_bin_dir, exist_ok=True)
 
         self._rgb_writer = None
@@ -112,7 +112,7 @@ class IPhoneCameraRecorder(Recorder):
         self._depth_writer.write(d8_bgr)
 
     def stream(self):
-        print(f"[IPhoneRecorder] Recording cam_60 from RGB:{self._rgb_port}, Depth:{self._depth_port}, Pose:{self._pose_port}")
+        print(f"[IPhoneRecorder] Recording iphone from RGB:{self._rgb_port}, Depth:{self._depth_port}, Pose:{self._pose_port}")
         self.record_start_time = time.time()
 
         while True:
@@ -142,6 +142,7 @@ class IPhoneCameraRecorder(Recorder):
 
                 try:
                     pose_dict = self.pose_sub.recv_keypoints()
+                    print("[IPhoneRecorder] Received pose dict:", list(pose_dict.keys()))
                     ts = pose_dict["timestamp"]
                     t = np.array(pose_dict["t"], dtype=np.float32)
                     q = np.array(pose_dict["q"], dtype=np.float32)
@@ -161,9 +162,9 @@ class IPhoneCameraRecorder(Recorder):
         self._finalize_recording()
 
     def _write_rgb_metadata(self):
-        path = os.path.join(self._storage, "cam_60_rgb_video.metadata")
+        path = os.path.join(self._storage, "iphone_rgb_video.metadata")
         meta = dict(self.metadata)
-        meta["sensor"] = "cam_60_rgb_video"
+        meta["sensor"] = "iphone_rgb_video"
         meta["fps"] = self._fps
         meta["frame_count"] = self.rgb_frame_count
         meta["timestamps"] = self.rgb_timestamps
@@ -173,9 +174,9 @@ class IPhoneCameraRecorder(Recorder):
         print(f"[IPhoneRecorder] RGB metadata saved to: {path}")
 
     def _write_depth_metadata(self):
-        path = os.path.join(self._storage, "cam_60_depth.metadata")
+        path = os.path.join(self._storage, "iphone_depth.metadata")
         meta = dict(self.metadata)
-        meta["sensor"] = "cam_60_depth"
+        meta["sensor"] = "iphone_depth"
         meta["fps"] = self._fps
         meta["frame_count"] = self.depth_frame_count
         meta["timestamps"] = self.depth_timestamps
@@ -183,6 +184,18 @@ class IPhoneCameraRecorder(Recorder):
         meta["recorder_image_stream_port"] = self._depth_port
         store_pickle_data(path, meta)
         print(f"[IPhoneRecorder] Depth metadata saved to: {path}")
+
+    def _write_pose_txt(self):
+        txt_path = os.path.join(self._storage, "iphone_pose.txt")
+
+        with open(txt_path, "w") as f:
+            for ts, t, q in self.pose_list:
+                q_list = q.tolist()
+                t_list = t.tolist()
+                line = f"\"<{ts}>\" ," + ",".join([str(v) for v in q_list + t_list]) + "\n"
+                f.write(line)
+
+        print(f"[IPhoneRecorder] Pose TXT saved: {txt_path}")
 
     def _write_pose_h5(self):
         print(f"[IPhoneRecorder] Saving pose data to: {self.pose_h5_path}")
@@ -235,7 +248,8 @@ class IPhoneCameraRecorder(Recorder):
 
         self._write_rgb_metadata()
         self._write_depth_metadata()
-        self._write_pose_h5()
+        # self._write_pose_h5()
+        self._write_pose_txt()
 
         def report(path):
             if os.path.exists(path):
@@ -247,4 +261,4 @@ class IPhoneCameraRecorder(Recorder):
         report(self.rgb_path)
         report(self.depth_path)
         print(f"[Done] {self.depth_bin_dir}/ ({len(os.listdir(self.depth_bin_dir)) if os.path.exists(self.depth_bin_dir) else 0} depth .bin frames)")
-        report(self.pose_h5_path)
+        report(self.pose_txt_path)

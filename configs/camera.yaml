@@ -5,7 +5,7 @@ defaults:
   - override hydra/job_logging: disabled 
 
 robot_cam_serial_numbers: 
-  - 1: '239122072217'
+  - 8: '239122072217'  # Changed to 8 to match running server on port 10013
   # - 2: '023322062082'
   # - 3: '233522071078'
   # - 4: '242322078244'

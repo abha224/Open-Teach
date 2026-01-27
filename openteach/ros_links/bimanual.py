@@ -9,7 +9,6 @@ import random
 from openteach.constants import SCALE_FACTOR, DEPLOY_FREQ, POLICY_FREQ
 from scipy.spatial.transform import Rotation as R
 from openteach.constants import *
-import ipdb
 
 class RobotControlMode(Enum):
     CARTESIAN_CONTROL = 0
@@ -23,7 +22,6 @@ class Robot(XArmAPI):
         self.set_gripper_enable(True)
         self.ip = ip
         self.gripper_start_state = gripper_start_state
-        self.eval_trial_counter = 0
 
     def clear(self):
         self.clean_error()
@@ -63,73 +61,73 @@ class Robot(XArmAPI):
             time.sleep(rate)
         
     def reset(self):
-        print("\n================ ROBOT RESET START ================\n")
-
         # Clean error
-        print("[DEBUG][reset] Calling clear()")
         self.clear()
-
-        print("[DEBUG][reset] Pausing 1s loop")
+        print("Reset working")
         for i in range(1):
-            print("[DEBUG][reset] countdown:", i)
+            print(i)
             time.sleep(1)
 
-        print("[DEBUG][reset] Setting mode SERVO_CONTROL")
         self.set_mode_and_state(RobotControlMode.SERVO_CONTROL, 0)
 
-        print("[DEBUG][reset] ROBOT_HOME_POSE_AA =", ROBOT_HOME_POSE_AA)
         modified_robot_home_pose_AA = ROBOT_HOME_POSE_AA[:]
-        print("[DEBUG][reset] COPY initial =", modified_robot_home_pose_AA)
-
-        # Plug insertion offsets
-        print("[DEBUG][reset] Applying plug offsets (+60, -110, -60)")
+        
+        # For SpaceMouse
+        # modified_robot_home_pose_AA[0] += 33
+        # modified_robot_home_pose_AA[1] -= 5
+        # modified_robot_home_pose_AA[2] -= 230
+        
+        # For Scale Demo
+        # modified_robot_home_pose_AA[0] += 55
+        # modified_robot_home_pose_AA[1] -= 200
+        # modified_robot_home_pose_AA[2] -= 28
+      
+        # For Reaching
+        # modified_robot_home_pose_AA[0] += 134
+        # modified_robot_home_pose_AA[1] -= 25
+        # modified_robot_home_pose_AA[2] -= 55
+        
+        # For Plug Insertion
         modified_robot_home_pose_AA[0] += 100
         modified_robot_home_pose_AA[1] -= 120
         modified_robot_home_pose_AA[2] -= 60
-
-        print("[DEBUG][reset] After plug offsets:", modified_robot_home_pose_AA)
-
-        # Random offset sampling
+        
+        # # For USB Insertion
+        # modified_robot_home_pose_AA[0] += 119
+        # modified_robot_home_pose_AA[1] -= 75
+        # modified_robot_home_pose_AA[2] -= 145
+        
+        
         def random_outside(inner_min, inner_max, outer_min, outer_max):
-            val = (random.uniform(outer_min, inner_min)
-                    if random.random() < 0.5
-                    else random.uniform(inner_max, outer_max))
-            print(f"[DEBUG][reset] random_outside → {val}")
-            return val
-
+            # 50/50 pick which side
+            if random.random() < 0.5:
+                return random.uniform(outer_min, inner_min)
+            else:
+                return random.uniform(inner_max, outer_max)
+            
         x_offset = random_outside(0, 20, -10, 30)
         y_offset = random_outside(-20, 20, -30, 30)
-
-        print(f"[DEBUG][reset] x_offset={x_offset}, y_offset={y_offset}")
-
-        print("[DEBUG][reset] Moving to base home via smooth_servo_move()")
+        
         self.smooth_servo_move(modified_robot_home_pose_AA,
                                step_size=3,
                                loop_rate_hz=20.0,
                                tol=1)
 
-        print("[DEBUG][reset] Applying offsets to modified pose")
-        modified_robot_home_pose_AA[0] += x_offset
-        modified_robot_home_pose_AA[1] += y_offset
-
-        print("[DEBUG][reset] FINAL target pose:", modified_robot_home_pose_AA)
-
-        print("[DEBUG][reset] Moving with final offsets via smooth_servo_move()")
+        modified_robot_home_pose_AA[0] += random.uniform(-30, 30) #x_offset 
+        modified_robot_home_pose_AA[1] += random.uniform(-30, 30) #y_offset
+        # # modified_robot_home_pose_AA[2] += random.uniform(-20, -10)
+        
+        print("Set State to:", modified_robot_home_pose_AA)
         self.smooth_servo_move(modified_robot_home_pose_AA,
                                step_size=2,
                                loop_rate_hz=20.0,
                                tol=1)
-
-        status = self.set_servo_cartesian_aa(modified_robot_home_pose_AA, wait=True, relative=False)
-        print(f"[DEBUG][reset] Final servo-cartesian status={status}")
-
-        assert status == 0, "[ERROR][reset] Failed to set robot home pose!"
-
-        print("[DEBUG][reset] Setting mode and state again to SERVO_CONTROL")
+        status = self.set_servo_cartesian_aa(
+                    modified_robot_home_pose_AA, wait=True, relative=False)
+        assert status == 0, "Failed to set robot at home joint position"
         self.set_mode_and_state(RobotControlMode.SERVO_CONTROL, 0)
-
-        print("[DEBUG][reset] Setting gripper position:", self.gripper_start_state)
         self.set_gripper_position(self.gripper_start_state, wait=True)
+
 
 class DexArmControl():
     def __init__(self, ip, gripper_start_state=800.0, record_type=None):
@@ -282,7 +280,7 @@ class DexArmControl():
         #     self.desired_gripper_pose = gripper_pose
         #     self.apply_gripper=True
         ############### variant 3
-        if not hasattr(self, 'desired_grippe r_pose'):
+        if not hasattr(self, 'desired_gripper_pose'):
             self.desired_gripper_pose = min(1, max(0, gripper_pose)) * 800
             self.apply_gripper=True
         elif self.desired_gripper_pose > 400 and gripper_pose < 0.6: #0.5:

@@ -9,7 +9,7 @@ defaults:
 
 # storage_path: /mnt/robotlab/abha/visk_rl_jax/exp_local/2025.06.26_bcrl_plug_insertion/0004_plug_insertion
 # storage_path: /mnt/robotlab/abha/visk_rl_jax/exports/socket_aug/
-storage_path: /mnt/robotlab/abha/visk_rl_jax/exports/16_11_socket_aug/
+storage_path: /mnt/robotlab/abha/visk_rl_jax/exports/2025..11.23_bc_plug_insertion/socket_augmentation/
 demo_num: 0
 sim_env: false
 use_sensor: true
